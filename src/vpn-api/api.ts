@@ -63,7 +63,7 @@ events {
 
 stream {
   map $ssl_preread_server_name $backend {
-    ${keyValues.map(({ key, value }) => `${key} ${value}:443\n`)}
+    ${keyValues.map(({ key, value }) => `${key} ${value}:443;\n`)}
   }
 
   map $ssl_preread_protocol $upstream {
