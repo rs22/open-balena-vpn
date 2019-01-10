@@ -63,7 +63,7 @@ events {
 
 stream {
   map $ssl_preread_server_name $upstream {
-    ${keyValues.map(({ key, value }) => `${key} ${value}:443;\n`)}
+    ${keyValues.map(({ key, value }) => `${key + process.env.DEVICE_DOMAIN_SUFFIX} ${value}:443;\n`)}
   }
 
   server {
