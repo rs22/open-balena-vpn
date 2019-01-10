@@ -42,6 +42,8 @@
     "middleware-handler": "^0.2.0",
     "morgan": "^1.9.1",
     "netmask": "^1.0.6",
+    "node-docker-api": "^1.1.22",
+    "node-redis-scan": "^1.0.2",
     "node-tunnel": "^2.1.0",
     "pinejs-client-request": "^5.1.0",
     "raven": "^2.6.4",
