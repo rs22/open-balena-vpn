@@ -29,12 +29,7 @@ interface AsyncApplication extends express.Application {
 	listenAsync(port: number): Promise<ReturnType<express.Application['listen']>>;
 }
 
-[
-	'BALENA_API_HOST',
-	'VPN_SERVICE_API_KEY',
-	'VPN_HOST',
-	'VPN_API_BASE_PORT',
-]
+['BALENA_API_HOST', 'VPN_SERVICE_API_KEY', 'VPN_HOST', 'VPN_API_BASE_PORT']
 	.filter(key => process.env[key] == null)
 	.forEach((key, idx, keys) => {
 		logger.error(`${key} env variable is not set.`);
@@ -44,7 +39,6 @@ interface AsyncApplication extends express.Application {
 	});
 
 const VPN_API_BASE_PORT = parseInt(process.env.VPN_API_BASE_PORT!, 10);
-
 
 const worker = (instanceId: number) => {
 	logger.info(`worker-${instanceId} process started with pid ${process.pid}`);

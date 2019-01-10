@@ -18,12 +18,18 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as _ from 'lodash';
+import * as redis from 'redis';
 
 import { captureException, logger } from '../utils';
 
 import { clients, request } from './utils';
 
 const BALENA_API_HOST = process.env.BALENA_API_HOST!;
+
+const db = redis.createClient({
+	host: '127.0.0.1',
+	port: 6379,
+});
 
 // Private endpoints should use the `fromLocalHost` middleware.
 const fromLocalHost: express.RequestHandler = (req, res, next) => {
@@ -53,6 +59,7 @@ const apiFactory = () => {
 			return res.sendStatus(400);
 		}
 		clients.connected(req.body);
+		db.set(req.body.common_name, req.body.virtual_address);
 		res.send('OK');
 	});
 
@@ -94,6 +101,7 @@ const apiFactory = () => {
 		}
 
 		clients.disconnected(req.body);
+		db.del(req.body.common_name);
 		res.send('OK');
 	});
 
