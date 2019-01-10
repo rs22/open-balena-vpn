@@ -62,17 +62,12 @@ events {
 }
 
 stream {
-  map $ssl_preread_server_name $backend {
+  map $ssl_preread_server_name $upstream {
     ${keyValues.map(({ key, value }) => `${key} ${value}:443;\n`)}
   }
 
-  map $ssl_preread_protocol $upstream {
-    ""        127.0.0.1:1194;
-    default   $backend:443;
-  }
-
   server {
-      listen      443;
+      listen      4430;
       proxy_pass  $upstream;
       ssl_preread on;
   }
