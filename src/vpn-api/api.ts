@@ -61,16 +61,18 @@ events {
 		worker_connections 1024;
 }
 
-${keyValues.map(
-			({ key, value }) => `
-upstream ${key} {
-	server ${value}:443;
-}`,
-		)}
+map $ssl_preread_server_name $backend {
+  ${keyValues.map(({ key, value }) => `${key} ${value}:443\n`)}
+}
+
+map $ssl_preread_protocol $upstream {
+  ""        127.0.0.1:1194;
+  default   $backend:443;
+}
 
 server {
 		listen      443;
-		proxy_pass  $ssl_preread_server_name;
+		proxy_pass  $upstream;
 		ssl_preread on;
 }
 `;
