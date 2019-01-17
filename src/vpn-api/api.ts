@@ -18,24 +18,12 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as _ from 'lodash';
-import * as redis from 'redis';
-import * as fs from 'fs';
-import { Docker } from 'node-docker-api';
-import { promisify } from 'util';
 
 import { captureException, logger } from '../utils';
 
 import { clients, request } from './utils';
 
-const redisScan = require('node-redis-scan');
-
 const BALENA_API_HOST = process.env.BALENA_API_HOST!;
-
-const db = redis.createClient({
-	host: '127.0.0.1',
-	port: 6379,
-});
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 // Private endpoints should use the `fromLocalHost` middleware.
 const fromLocalHost: express.RequestHandler = (req, res, next) => {
@@ -45,39 +33,6 @@ const fromLocalHost: express.RequestHandler = (req, res, next) => {
 	}
 
 	next();
-};
-
-const regenerateConfig = () => {
-	const scanner = new redisScan(db);
-	scanner.scan('*', async (_: any, matchingKeys: string[]) => {
-		const getAsync = promisify(db.get).bind(db);
-		const keyValues = await Promise.all(
-			matchingKeys.map(async key => ({ key, value: await getAsync(key) })),
-		);
-		const fileContents = `
-worker_processes 1;
-
-events {
-		worker_connections 1024;
-}
-
-stream {
-  map $ssl_preread_server_name $upstream {
-    ${keyValues.map(({ key, value }) => `${key + process.env.DEVICE_DOMAIN_SUFFIX} ${value}:443;\n`)}
-  }
-
-  server {
-      listen      4430;
-      proxy_pass  $upstream;
-      ssl_preread on;
-  }
-}
-`;
-		fs.writeFileSync('/etc/nginx/nginx.conf', fileContents);
-
-		const nginx = docker.container.get('vpn_nginx');
-		nginx.kill('SIGHUP');
-	});
 };
 
 const apiFactory = () => {
@@ -98,8 +53,6 @@ const apiFactory = () => {
 			return res.sendStatus(400);
 		}
 		clients.connected(req.body);
-		db.set(req.body.common_name, req.body.virtual_address);
-		regenerateConfig();
 		res.send('OK');
 	});
 
@@ -141,8 +94,6 @@ const apiFactory = () => {
 		}
 
 		clients.disconnected(req.body);
-		db.del(req.body.common_name);
-		regenerateConfig();
 		res.send('OK');
 	});
 
